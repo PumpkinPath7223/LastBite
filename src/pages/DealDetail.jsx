@@ -25,31 +25,35 @@ export default function DealDetail() {
 
     async function fetchDeal() {
       setLoading(true);
-      const { data: listing, error } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('id', id)
-        .single();
+      try {
+        const { data: listing, error } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (error) {
-        setFetchError(error.message);
-        setLoading(false);
-        return;
+        if (error) {
+          setFetchError(error.message);
+          return;
+        }
+
+        // Fetch business info separately
+        const { data: business } = await supabase
+          .from('profiles')
+          .select('id, business_name, business_address, lat, lng')
+          .eq('id', listing.business_id)
+          .single();
+
+        if (cancelled) return;
+
+        setDeal({ ...listing, users: business || null });
+      } catch (err) {
+        if (!cancelled) setFetchError(err.message || 'Failed to load deal');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      // Fetch business info separately
-      const { data: business } = await supabase
-        .from('profiles')
-        .select('id, business_name, business_address, lat, lng')
-        .eq('id', listing.business_id)
-        .single();
-
-      if (cancelled) return;
-
-      setDeal({ ...listing, users: business || null });
-      setLoading(false);
     }
 
     fetchDeal();

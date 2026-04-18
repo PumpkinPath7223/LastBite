@@ -22,18 +22,22 @@ export default function useClaim(listingId) {
     setError(null);
     setSuccess(false);
 
-    const { error: rpcError } = await supabase.rpc('claim_deal', {
-      p_listing_id: listingId,
-      p_user_id: user.id,
-    });
+    try {
+      const { error: rpcError } = await supabase.rpc('claim_deal', {
+        p_listing_id: listingId,
+        p_user_id: user.id,
+      });
 
-    if (rpcError) {
-      setError(rpcError.message);
-    } else {
-      setSuccess(true);
+      if (rpcError) {
+        setError(rpcError.message);
+      } else {
+        setSuccess(true);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to claim deal');
+    } finally {
+      setClaiming(false);
     }
-
-    setClaiming(false);
   }
 
   return { claim, claiming, success, error };

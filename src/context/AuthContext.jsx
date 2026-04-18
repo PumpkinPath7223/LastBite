@@ -29,23 +29,33 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Get current session on mount
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
-        setUser(profile ? { ...session.user, ...profile } : session.user);
+      try {
+        if (session?.user) {
+          const profile = await fetchProfile(session.user.id);
+          setUser(profile ? { ...session.user, ...profile } : session.user);
+        }
+      } catch (err) {
+        console.error('Session init error:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const profile = await fetchProfile(session.user.id);
-          setUser(profile ? { ...session.user, ...profile } : session.user);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
+        try {
+          if (event === 'SIGNED_IN' && session?.user) {
+            const profile = await fetchProfile(session.user.id);
+            setUser(profile ? { ...session.user, ...profile } : session.user);
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
+          }
+        } catch (err) {
+          console.error('Auth state change error:', err);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 

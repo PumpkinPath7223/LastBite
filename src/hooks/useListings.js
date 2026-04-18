@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-/**
- * Fetch active listings with realtime updates and optional category filtering.
- */
 export default function useListings() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('all');
 
-  // Fetch active listings
   useEffect(() => {
     let cancelled = false;
 
@@ -18,50 +14,50 @@ export default function useListings() {
       setLoading(true);
       setError(null);
 
-      let query = supabase
-        .from('listings')
-        .select('*')
-        .gt('expires_at', new Date().toISOString())
-        .gt('quantity_remaining', 0)
-        .order('created_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('listings')
+          .select('*')
+          .gt('expires_at', new Date().toISOString())
+          .gt('quantity_remaining', 0)
+          .order('created_at', { ascending: false });
 
-      if (category !== 'all') {
-        query = query.eq('category', category);
-      }
+        if (category !== 'all') {
+          query = query.eq('category', category);
+        }
 
-      const { data: listingsData, error: fetchError } = await query;
-      console.log('Listings fetch result:', { listingsData, fetchError });
+        const { data: listingsData, error: fetchError } = await query;
 
-      if (fetchError) {
+        if (fetchError) {
+          if (!cancelled) setError(fetchError.message);
+          return;
+        }
+
+        // Fetch business profiles separately and merge
+        const businessIds = [...new Set((listingsData || []).map((l) => l.business_id))];
+        let usersMap = {};
+        if (businessIds.length > 0) {
+          const { data: usersData } = await supabase
+            .from('profiles')
+            .select('id, business_name, business_address, lat, lng')
+            .in('id', businessIds);
+          if (usersData) {
+            usersMap = Object.fromEntries(usersData.map((u) => [u.id, u]));
+          }
+        }
+
         if (!cancelled) {
-          setError(fetchError.message);
-          setLoading(false);
+          const data = (listingsData || []).map((l) => ({
+            ...l,
+            users: usersMap[l.business_id] || null,
+          }));
+          setListings(data);
         }
-        return;
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Failed to fetch listings');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      // Fetch business users separately and merge
-      const businessIds = [...new Set((listingsData || []).map((l) => l.business_id))];
-      let usersMap = {};
-      if (businessIds.length > 0) {
-        const { data: usersData } = await supabase
-          .from('profiles')
-          .select('id, business_name, business_address, lat, lng')
-          .in('id', businessIds);
-        if (usersData) {
-          usersMap = Object.fromEntries(usersData.map((u) => [u.id, u]));
-        }
-      }
-
-      if (cancelled) return;
-
-      const data = (listingsData || []).map((l) => ({
-        ...l,
-        users: usersMap[l.business_id] || null,
-      }));
-
-      setListings(data);
-      setLoading(false);
     }
 
     fetchListings();

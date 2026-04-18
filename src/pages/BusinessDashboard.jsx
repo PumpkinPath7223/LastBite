@@ -15,36 +15,41 @@ export default function BusinessDashboard() {
   const [totalClaims, setTotalClaims] = useState(0);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
 
     async function fetchData() {
       setLoading(true);
+      try {
+        const { data: dealData } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('business_id', user.id)
+          .order('created_at', { ascending: false });
 
-      // Fetch business's deals
-      const { data: dealData } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('business_id', user.id)
-        .order('created_at', { ascending: false });
+        const dealIds = (dealData || []).map((d) => d.id);
+        let count = 0;
+        if (dealIds.length > 0) {
+          const { count: claimCount } = await supabase
+            .from('claims')
+            .select('*', { count: 'exact', head: true })
+            .in('listing_id', dealIds);
+          count = claimCount || 0;
+        }
 
-      // Fetch total claims for this business's deals
-      const dealIds = (dealData || []).map((d) => d.id);
-      let count = 0;
-      if (dealIds.length > 0) {
-        const { count: claimCount } = await supabase
-          .from('claims')
-          .select('*', { count: 'exact', head: true })
-          .in('listing_id', dealIds);
-        count = claimCount || 0;
+        if (!cancelled) {
+          setDeals(dealData || []);
+          setTotalClaims(count || 0);
+        }
+      } catch (err) {
+        console.error('Dashboard fetch error:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      if (cancelled) return;
-
-      setDeals(dealData || []);
-      setTotalClaims(count || 0);
-      setLoading(false);
     }
 
     fetchData();
