@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew upgrade:*)",
+      "Read(//private/tmp/**)",
+      "Bash(npm create:*)",
+      "Bash(cp -r /tmp/lastbite-temp/* /tmp/lastbite-temp/.gitignore /Users/pratyush/claudeHacksSP26/ 2>/dev/null; ls /Users/pratyush/claudeHacksSP26/)",
+      "Bash(npm install:*)",
+      "Bash(npx vite:*)"
+    ]
+  }
+}
