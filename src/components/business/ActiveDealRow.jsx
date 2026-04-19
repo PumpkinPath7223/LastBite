@@ -1,8 +1,11 @@
+import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import formatPrice from '../../utils/formatPrice';
 import DealTimer from '../deals/DealTimer';
 import Badge from '../ui/Badge';
 
-export default function ActiveDealRow({ deal }) {
+export default function ActiveDealRow({ deal, onCancel }) {
   const {
     title,
     deal_price,
@@ -16,6 +19,8 @@ export default function ActiveDealRow({ deal }) {
   const quantityPct =
     quantity_total > 0 ? (quantity_remaining / quantity_total) * 100 : 0;
 
+  const [cancelling, setCancelling] = useState(false);
+
   let status = 'active';
   let statusVariant = 'default';
 
@@ -26,6 +31,19 @@ export default function ActiveDealRow({ deal }) {
     status = 'sold out';
     statusVariant = 'urgent';
   }
+
+  const isActive = status === 'active';
+
+  const handleCancel = async () => {
+    if (!window.confirm('Cancel this deal? This cannot be undone.')) return;
+    setCancelling(true);
+    const { error } = await supabase
+      .from('listings')
+      .update({ expires_at: new Date().toISOString(), quantity_remaining: 0 })
+      .eq('id', deal.id);
+    setCancelling(false);
+    if (!error && onCancel) onCancel(deal.id);
+  };
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4">
@@ -60,10 +78,22 @@ export default function ActiveDealRow({ deal }) {
 
       {/* Status badge */}
       <div className="shrink-0">
-        <Badge variant={status === 'active' ? 'discount' : statusVariant}>
+        <Badge variant={isActive ? 'discount' : statusVariant}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
       </div>
+
+      {/* Cancel button */}
+      {isActive && (
+        <button
+          onClick={handleCancel}
+          disabled={cancelling}
+          className="shrink-0 flex items-center gap-1 text-sm text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+        >
+          <Trash2 className="h-4 w-4" />
+          {cancelling ? 'Cancelling...' : 'Cancel'}
+        </button>
+      )}
     </div>
   );
 }

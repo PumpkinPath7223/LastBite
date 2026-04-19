@@ -8,6 +8,7 @@ import DealDetail from './pages/DealDetail'
 import BusinessDashboard from './pages/BusinessDashboard'
 import PostDeal from './pages/PostDeal'
 import Favorites from './pages/Favorites'
+import MyClaims from './pages/MyClaims'
 
 export default function App() {
   return (
@@ -38,8 +39,16 @@ export default function App() {
           <Route
             path="/favorites"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedType="student">
                 <Favorites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-claims"
+            element={
+              <ProtectedRoute allowedType="student">
+                <MyClaims />
               </ProtectedRoute>
             }
           />

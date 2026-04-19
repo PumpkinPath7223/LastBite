@@ -9,8 +9,8 @@ export default function ProtectedRoute({ children, allowedType }) {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (allowedType && user.user_type !== allowedType) {
-    return <Navigate to="/deals" replace />;
+  if (allowedType && user.user_type && user.user_type !== allowedType) {
+    return <Navigate to={user.user_type === 'student' ? '/deals' : '/dashboard'} replace />;
   }
 
   return children;

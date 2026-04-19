@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UtensilsCrossed, Heart, LogOut, Menu, X } from 'lucide-react';
+import { UtensilsCrossed, Heart, ShoppingBag, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
@@ -59,10 +59,13 @@ export default function Navbar() {
               </>
             )}
 
-            {user?.user_type === 'student' && (
+            {user && user?.user_type !== 'business' && (
               <>
                 <Link to="/deals" className="text-gray-700 hover:text-scarlet transition-colors">
                   Deals
+                </Link>
+                <Link to="/my-claims" className="flex items-center gap-1 text-gray-700 hover:text-scarlet transition-colors">
+                  <ShoppingBag className="h-4 w-4" /> My Claims
                 </Link>
                 <Link to="/favorites" className="flex items-center gap-1 text-gray-700 hover:text-scarlet transition-colors">
                   <Heart className="h-4 w-4" /> Favorites
@@ -119,10 +122,13 @@ export default function Navbar() {
             </>
           )}
 
-          {user?.user_type === 'student' && (
+          {user && user?.user_type !== 'business' && (
             <>
               <Link to="/deals" onClick={closeMobile} className="block py-2 text-gray-700 hover:text-scarlet">
                 Deals
+              </Link>
+              <Link to="/my-claims" onClick={closeMobile} className="flex items-center gap-1 py-2 text-gray-700 hover:text-scarlet">
+                <ShoppingBag className="h-4 w-4" /> My Claims
               </Link>
               <Link to="/favorites" onClick={closeMobile} className="flex items-center gap-1 py-2 text-gray-700 hover:text-scarlet">
                 <Heart className="h-4 w-4" /> Favorites

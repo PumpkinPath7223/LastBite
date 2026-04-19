@@ -113,7 +113,19 @@ export default function BusinessDashboard() {
         ) : (
           <div className="divide-y divide-gray-100">
             {deals.map((deal) => (
-              <ActiveDealRow key={deal.id} deal={deal} />
+              <ActiveDealRow
+                key={deal.id}
+                deal={deal}
+                onCancel={(id) =>
+                  setDeals((prev) =>
+                    prev.map((d) =>
+                      d.id === id
+                        ? { ...d, expires_at: new Date().toISOString(), quantity_remaining: 0 }
+                        : d
+                    )
+                  )
+                }
+              />
             ))}
           </div>
         )}
